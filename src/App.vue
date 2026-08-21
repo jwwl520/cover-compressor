@@ -18,7 +18,7 @@ const fileInput = ref(null);
 const settings = reactive({
   targetKB: 200,
   outType: 'image/jpeg', // image/jpeg | image/png
-  sizeMode: 'maxEdge',   // original | maxEdge | custom | percent
+  sizeMode: 'original',  // original | maxEdge | custom | percent
   maxEdge: 1920,
   customW: 1600,
   customH: null,
@@ -216,10 +216,6 @@ const totalSave = computed(() => {
 
 <template>
   <header class="app-header">
-    <div class="brand">
-      <span class="brand-icon">🖼</span>
-      <span>体面的图片压缩</span>
-    </div>
     <span class="privacy-badge"><span class="dot"></span> 图片不出浏览器 · 100% 纯前端处理</span>
   </header>
 
@@ -234,25 +230,37 @@ const totalSave = computed(() => {
   />
 
   <main class="app-main">
-    <!-- 空状态：上传区 -->
-    <div v-if="!items.length">
-      <div
-        class="upload-zone"
-        :class="{ dragover: isDragging }"
-        @click="onPick"
-        @dragover.prevent="isDragging = true"
-        @dragleave="isDragging = false"
-        @drop.prevent="onDrop"
-      >
-        <div class="upload-icon">📥</div>
-        <div class="upload-title">拖拽图片到这里，或点击选择</div>
-        <div class="upload-sub">4K 图片也能压进 200KB，且不会严重失真</div>
-        <div class="upload-hint">支持 JPG / PNG / WebP / AVIF / BMP 等 · 可批量多选</div>
-      </div>
+    <!-- 标题与介绍 -->
+    <section class="hero">
+      <h1>体面的图片压缩</h1>
+      <p class="hero-desc">
+        体面的图片压缩是一个在线<strong>图片压缩</strong>和<strong>格式转换</strong>工具，
+        该工具使用本地浏览器技术来压缩和转换图片，因此处理图片无需将图片发送到任何服务器，
+        图片永远不会离开您的设备，数据 <strong>100% 安全</strong>。
+        该工具支持自定义目标大小，自动在保证质量的前提下压缩到指定 KB，
+        同时支持 PNG 无损 / 量化压缩。支持将 JPG、PNG、WEBP、AVIF、BMP 等常见格式
+        转换成 JPG、PNG 图片，并可自由调整图片尺寸。
+      </p>
+    </section>
 
-      <div class="summary-bar" style="justify-content: center; margin-top: 20px">
-        压缩引擎：<b>MozJPEG</b>（JPG） + <b>UPNG 量化</b>（PNG） · 策略：限尺寸 → 二分质量 → 逐级降级
-      </div>
+    <!-- 上传区（始终显示） -->
+    <div
+      class="upload-zone"
+      :class="{ dragover: isDragging }"
+      @click="onPick"
+      @dragover.prevent="isDragging = true"
+      @dragleave="isDragging = false"
+      @drop.prevent="onDrop"
+    >
+      <div class="upload-icon">📥</div>
+      <div class="upload-title">将文件拖入此处或者点击按钮</div>
+      <div class="upload-sub">支持 JPG / PNG / WebP / AVIF / BMP 等常见格式</div>
+      <div class="upload-hint">无需上传文件，100% 安全，支持多张图片一起添加</div>
+    </div>
+
+    <!-- 空状态：引擎说明 -->
+    <div v-if="!items.length" class="summary-bar engine-note">
+      压缩引擎：<b>MozJPEG</b>（JPG） + <b>UPNG 量化</b>（PNG） · 策略：限尺寸 → 二分质量 → 逐级降级
     </div>
 
     <!-- 有图：设置 + 处理 -->

@@ -42,8 +42,8 @@ a { color: inherit; }
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 16px 32px;
+  justify-content: flex-end;
+  padding: 14px 32px;
   border-bottom: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
@@ -105,13 +105,48 @@ a { color: inherit; }
   padding: 28px 20px 60px;
 }
 
+/* 顶部标题与介绍 */
+.hero {
+  text-align: center;
+  padding: 36px 20px 6px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.hero h1 {
+  font-size: 34px;
+  font-weight: 800;
+  margin-bottom: 16px;
+  background: linear-gradient(120deg, var(--primary), var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.hero-desc {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--text-dim);
+}
+
+.hero-desc strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.engine-note {
+  justify-content: center;
+  margin-top: 22px;
+}
+
 /* 上传区 */
 .upload-zone {
+  margin-top: 26px;
   border: 2px dashed rgba(99, 102, 241, 0.35);
   border-radius: var(--radius);
   background: #ffffff;
   box-shadow: var(--shadow);
-  padding: 48px 20px;
+  padding: 52px 20px;
   text-align: center;
   cursor: pointer;
   transition: all 0.25s ease;
