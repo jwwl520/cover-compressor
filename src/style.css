@@ -77,6 +77,31 @@ html, body {
   padding: 56px 48px 120px;
 }
 
+/* ---------- 页面标题 ---------- */
+.page-title {
+  text-align: center;
+  padding: 8px 0 44px;
+}
+
+.page-title h1 {
+  font-family: var(--font-serif);
+  font-size: 38px;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  font-weight: 400;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+
+.page-title .page-subtitle {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-style: italic;
+  color: var(--text-tertiary);
+}
+
 /* ---------- 上传区 ---------- */
 .upload-zone {
   border: 1px dashed var(--border-strong);

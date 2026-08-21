@@ -226,6 +226,12 @@ const totalSave = computed(() => {
   />
 
   <main class="app-main">
+    <!-- 页面标题 -->
+    <section class="page-title">
+      <h1>体面的图片压缩</h1>
+      <p class="page-subtitle">在线图片压缩 · 纯前端本地处理</p>
+    </section>
+
     <!-- 上传区（始终显示） -->
     <div
       class="upload-zone"
