@@ -125,8 +125,7 @@ async function compressAll() {
   }
 }
 
-/* 设置变化 -> 自动重新压缩已完成/失败的项 */
-let recompressTimer = null;
+/* 设置变化 -> 仅将已完成/失败项标记为等待中，需用户点击"开始处理"后才压缩 */
 watch(
   () => [
     settings.targetKB,
@@ -138,20 +137,17 @@ watch(
     settings.percent,
   ],
   () => {
-    clearTimeout(recompressTimer);
-    if (items.value.length && !processing.value) {
-      recompressTimer = setTimeout(async () => {
-        // 重置已完成/失败项为 pending 后重新压缩
-        for (const item of items.value) {
-          if (item.status === 'done' || item.status === 'error') {
-            item.status = 'pending';
-            item.resultUrl = null;
-            item.resultSize = null;
-            item.error = null;
-          }
-        }
-        await compressAll();
-      }, 400);
+    for (const item of items.value) {
+      if (item.status === 'done' || item.status === 'error') {
+        if (item.resultUrl) URL.revokeObjectURL(item.resultUrl);
+        item.status = 'pending';
+        item.resultUrl = null;
+        item.resultSize = null;
+        item.resultWidth = null;
+        item.resultHeight = null;
+        item.resultType = null;
+        item.error = null;
+      }
     }
   }
 );
@@ -222,7 +218,7 @@ const totalSave = computed(() => {
   <header class="app-header">
     <div class="brand">
       <span class="brand-icon">🖼</span>
-      <span>封面压缩</span>
+      <span>体面的图片压缩</span>
     </div>
     <span class="privacy-badge"><span class="dot"></span> 图片不出浏览器 · 100% 纯前端处理</span>
   </header>
@@ -309,7 +305,7 @@ const totalSave = computed(() => {
       <!-- 操作栏 -->
       <div class="action-bar">
         <button class="btn btn-primary" :disabled="processing || !hasWork" @click="compressAll">
-          {{ processing ? '压缩中…' : hasWork ? '开始压缩' : '全部已完成 ✓' }}
+          {{ processing ? '处理中…' : hasWork ? '开始处理' : '全部已完成 ✓' }}
         </button>
         <button class="btn btn-ghost" :disabled="processing || !doneCount" @click="downloadAll">
           📦 打包下载全部 ({{ doneCount }})

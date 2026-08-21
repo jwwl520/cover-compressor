@@ -11,7 +11,7 @@ const emit = defineEmits(['download', 'remove']);
 
 const stateLabel = computed(() => {
   const s = props.item.status;
-  if (s === 'processing') return '压缩中';
+  if (s === 'processing') return '处理中';
   if (s === 'done') return '完成';
   if (s === 'error') return '失败';
   return '等待中';
@@ -40,7 +40,7 @@ function download() {
     <div class="card-body">
       <div v-if="item.status === 'processing'" style="text-align: center; padding: 40px 0">
         <div style="font-size: 28px; margin-bottom: 10px">⚙️</div>
-        <div style="color: var(--text-dim); font-size: 13px">正在使用 MozJPEG / PNG 量化引擎压缩…</div>
+        <div style="color: var(--text-dim); font-size: 13px">正在处理，请稍候…</div>
         <div class="progress"><div class="progress-bar" :style="{ width: (item.progress || 5) + '%' }"></div></div>
       </div>
 
