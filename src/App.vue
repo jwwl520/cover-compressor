@@ -216,7 +216,7 @@ const totalSave = computed(() => {
 
 <template>
   <header class="app-header">
-    <span class="privacy-badge"><span class="dot"></span> 图片不出浏览器 · 100% 纯前端处理</span>
+    <span class="privacy-badge">纯前端本地处理 · 图片不离开设备</span>
   </header>
 
   <!-- 文件选择器（常驻，供各处触发） -->
@@ -230,19 +230,6 @@ const totalSave = computed(() => {
   />
 
   <main class="app-main">
-    <!-- 标题与介绍 -->
-    <section class="hero">
-      <h1>体面的图片压缩</h1>
-      <p class="hero-desc">
-        体面的图片压缩是一个在线<strong>图片压缩</strong>和<strong>格式转换</strong>工具，
-        该工具使用本地浏览器技术来压缩和转换图片，因此处理图片无需将图片发送到任何服务器，
-        图片永远不会离开您的设备，数据 <strong>100% 安全</strong>。
-        该工具支持自定义目标大小，自动在保证质量的前提下压缩到指定 KB，
-        同时支持 PNG 无损 / 量化压缩。支持将 JPG、PNG、WEBP、AVIF、BMP 等常见格式
-        转换成 JPG、PNG 图片，并可自由调整图片尺寸。
-      </p>
-    </section>
-
     <!-- 上传区（始终显示） -->
     <div
       class="upload-zone"
@@ -255,7 +242,15 @@ const totalSave = computed(() => {
       <div class="upload-icon">📥</div>
       <div class="upload-title">将文件拖入此处或者点击按钮</div>
       <div class="upload-sub">支持 JPG / PNG / WebP / AVIF / BMP 等常见格式</div>
-      <div class="upload-hint">无需上传文件，100% 安全，支持多张图片一起添加</div>
+      <div class="upload-hint">所有图片均在本地浏览器中处理，不会上传到服务器</div>
+    </div>
+
+    <!-- 风险提示 / 重要说明 -->
+    <div class="notice">
+      <span class="notice-label">提示 · Note</span>
+      本工具为<strong>纯前端</strong>应用，所有图片均在本机浏览器中完成压缩与转换，图片不会上传至任何服务器，也不会被存储。
+      处理速度取决于您的设备性能，超大图片可能较慢；为保证最佳兼容性（含 WebP 等格式支持），
+      建议使用最新版 Chrome / Edge / Firefox 浏览器。
     </div>
 
     <!-- 空状态：引擎说明 -->
