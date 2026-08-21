@@ -215,10 +215,6 @@ const totalSave = computed(() => {
 </script>
 
 <template>
-  <header class="app-header">
-    <span class="privacy-badge">纯前端本地处理 · 图片不离开设备</span>
-  </header>
-
   <!-- 文件选择器（常驻，供各处触发） -->
   <input
     ref="fileInput"
