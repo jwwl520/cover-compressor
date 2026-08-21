@@ -95,11 +95,12 @@ html, body {
 
 .page-title .page-subtitle {
   font-family: var(--font-sans);
-  font-size: 12px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   font-style: italic;
   color: var(--text-tertiary);
+  line-height: 1.8;
 }
 
 /* ---------- 上传区 ---------- */

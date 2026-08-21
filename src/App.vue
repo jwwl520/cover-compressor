@@ -229,7 +229,7 @@ const totalSave = computed(() => {
     <!-- 页面标题 -->
     <section class="page-title">
       <h1>体面的图片压缩</h1>
-      <p class="page-subtitle">在线图片压缩 · 纯前端本地处理</p>
+      <p class="page-subtitle">为体面人提供的图片压缩工具 · 在尽量不影响画面的情况下进行压缩</p>
     </section>
 
     <!-- 上传区（始终显示） -->
