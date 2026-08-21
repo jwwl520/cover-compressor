@@ -49,7 +49,7 @@ function download() {
       </template>
 
       <template v-else-if="item.origUrl">
-        <img :src="item.origUrl" alt="原图" style="width: 100%; display: block; border-radius: 10px" />
+        <img :src="item.origUrl" alt="原图" style="width: 100%; display: block" />
       </template>
 
       <div v-if="item.error" style="color: var(--danger); font-size: 13px; margin-top: 8px">

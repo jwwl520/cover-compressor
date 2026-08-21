@@ -36,6 +36,7 @@ html, body {
   font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
+  line-height: 1.7; /* leading-relaxed */
   min-height: 100vh;
 }
 
@@ -83,7 +84,7 @@ html, body {
   padding: 80px 24px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.4s ease;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .upload-zone:hover, .upload-zone.dragover {
@@ -186,12 +187,12 @@ input[type='number'], select {
   border: none;
   border-bottom: 1px solid var(--border-strong);
   border-radius: 0;
-  padding: 10px 2px;
+  padding: 13px 2px; /* 触控目标高度 ≥ 44px */
   font-family: var(--font-sans);
   font-size: 14px;
   width: 100%;
   outline: none;
-  transition: border-color 0.3s;
+  transition: border-color 0.2s ease;
 }
 
 input[type='number']:focus, select:focus {
@@ -219,9 +220,9 @@ input[type='number']::-webkit-inner-spin-button {
   font-size: 12px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  padding: 11px 0;
+  padding: 15px 0; /* 触控目标高度 ≥ 44px */
   cursor: pointer;
-  transition: all 0.3s;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
 .seg button:hover {
@@ -256,20 +257,46 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .btn {
+  position: relative;
   border: 1px solid var(--text);
   border-radius: 0;
   background: transparent;
   color: var(--text);
+  min-height: 44px; /* 触控目标高度 ≥ 44px */
   padding: 12px 30px;
   font-family: var(--font-sans);
   font-size: 13px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: color 0.2s ease, background-color 0.2s ease,
+    border-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease;
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+/* hover-underline 下划线动画（从右向左展开） */
+.btn::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 6px;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.2s ease;
+}
+
+.btn:hover:not(:disabled)::after {
+  transform: scaleX(1);
+  transform-origin: left center;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 .btn:disabled {
@@ -283,7 +310,7 @@ input[type='number']::-webkit-inner-spin-button {
 }
 
 .btn-primary:hover:not(:disabled) {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .btn-ghost:hover:not(:disabled) {
@@ -327,7 +354,7 @@ input[type='number']::-webkit-inner-spin-button {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: border-color 0.4s;
+  transition: border-color 0.2s ease;
 }
 
 .image-card:hover {
@@ -452,7 +479,7 @@ input[type='number']::-webkit-inner-spin-button {
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: repeating-conic-gradient(rgba(28, 28, 28, 0.05) 0% 25%, transparent 0% 50%) 50% / 20px 20px;
+  background: rgba(28, 28, 28, 0.04); /* 纯单色，无背景图案 */
   user-select: none;
 }
 
@@ -522,6 +549,21 @@ input[type='number']::-webkit-inner-spin-button {
 .compare-tag.after {
   left: auto;
   right: 10px;
+}
+
+/* ---------- 可访问性 ---------- */
+:focus-visible {
+  outline: 1px solid var(--text);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* ---------- 空状态 / 其它 ---------- */
