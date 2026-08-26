@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, watch, computed, nextTick } from 'vue';
 import ImageCard from './components/ImageCard.vue';
+import CoverChecker from './components/CoverChecker.vue';
 import {
   decodeImage,
   compressImage,
@@ -14,6 +15,8 @@ const items = ref([]);
 const processing = ref(false);
 const isDragging = ref(false);
 const fileInput = ref(null);
+const auxOpen = ref(false); // 辅助功能折叠区
+const rejected = ref([]);   // 被拒绝的非 JPG/PNG 文件名
 
 const settings = reactive({
   targetKB: 200,
@@ -43,7 +46,14 @@ function onDrop(e) {
   if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
 }
 function addFiles(fileList) {
-  const files = Array.from(fileList).filter((f) => f.type.startsWith('image/'));
+  // 仅允许 JPG / PNG，其余格式提示报错
+  const bad = [];
+  const files = Array.from(fileList).filter((f) => {
+    if (f.type === 'image/jpeg' || f.type === 'image/png') return true;
+    bad.push(f.name);
+    return false;
+  });
+  if (bad.length) rejected.value = bad;
   for (const file of files) {
     items.value.push({
       id: `${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
@@ -219,7 +229,7 @@ const totalSave = computed(() => {
   <input
     ref="fileInput"
     type="file"
-    accept="image/*"
+    accept="image/jpeg,image/png"
     multiple
     hidden
     @change="onInputChange"
@@ -243,8 +253,16 @@ const totalSave = computed(() => {
     >
       <div class="upload-icon">📥</div>
       <div class="upload-title">将文件拖入此处或者点击按钮</div>
-      <div class="upload-sub">支持 JPG / PNG / WebP / AVIF / BMP 等常见格式</div>
+      <div class="upload-sub">仅支持 JPG / PNG 格式 · 其他格式将被忽略并提示</div>
       <div class="upload-hint">所有图片均在本地浏览器中处理，不会上传到服务器</div>
+    </div>
+
+    <!-- 格式不支持提示 -->
+    <div v-if="rejected.length" class="format-alert" role="alert">
+      <span class="format-alert-label">格式不支持 · Unsupported</span>
+      <div>仅支持 <b>JPG / PNG</b>，以下 <b>{{ rejected.length }}</b> 个文件已被忽略：</div>
+      <div class="format-alert-list">{{ rejected.join('、') }}</div>
+      <button class="format-alert-close" @click="rejected = []">关闭</button>
     </div>
 
     <!-- 风险提示 / 重要说明 -->
@@ -336,5 +354,23 @@ const totalSave = computed(() => {
         />
       </div>
     </template>
+
+    <!-- 辅助功能（折叠展开区） -->
+    <section class="aux">
+      <button
+        class="aux-toggle"
+        :class="{ open: auxOpen }"
+        :aria-expanded="auxOpen"
+        @click="auxOpen = !auxOpen"
+      >
+        <span class="aux-label">辅助功能 · Auxiliary</span>
+        <span class="aux-arrow">{{ auxOpen ? '↑ 收起' : '↓ 展开' }}</span>
+      </button>
+      <div class="aux-body" :class="{ open: auxOpen }" :aria-hidden="!auxOpen">
+        <div class="aux-inner">
+          <CoverChecker />
+        </div>
+      </div>
+    </section>
   </main>
 </template>
