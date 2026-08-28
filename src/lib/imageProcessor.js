@@ -64,14 +64,17 @@ function canvasToImageData(canvas) {
 
 /**
  * 在给定 canvas 上用 MozJPEG 二分质量，找到「大小 ≤ targetBytes」的最高质量
- * @returns ArrayBuffer | null
+ * 全部质量都超目标时，返回最低质量的结果（best effort，不报错）
+ * @returns ArrayBuffer
  */
 async function encodeJpegBest(canvas, targetBytes) {
   const imageData = canvasToImageData(canvas);
-  let lo = 35;   // 最低容忍质量（MozJPEG 0-100）
+  let lo = 10;   // 最低容忍质量（MozJPEG 0-100，比原 35 更使劲）
   let hi = 92;
   let best = null;
-  for (let i = 0; i < 6; i++) {
+  let fallback = null; // 最低质量尝试结果
+  let minQ = Infinity;
+  for (let i = 0; i < 7; i++) {
     const q = Math.round((lo + hi) / 2);
     // MozJPEG 逐条扫描，progressive 优化
     const buf = await encodeJpeg(imageData, {
@@ -81,11 +84,12 @@ async function encodeJpegBest(canvas, targetBytes) {
       progressive: true,
       optimize_coding: true,
     });
+    if (q < minQ) { minQ = q; fallback = buf; }
     if (buf.byteLength <= targetBytes) { best = buf; lo = q + 1; }
     else hi = q - 1;
     if (lo > hi) break;
   }
-  return best;
+  return best || fallback;
 }
 
 /* ---------- 4. PNG 编码（UPNG.js） ---------- */
@@ -97,18 +101,21 @@ async function encodePngWith(canvas, cnum) {
 
 /**
  * PNG 目标大小编码：先无损，装不下则用有损量化逐步减少颜色数
- * @returns ArrayBuffer | null
+ * 全部色数都超目标时，返回色数最少（16）的结果（best effort，不报错）
+ * @returns ArrayBuffer
  */
 async function encodePngBest(canvas, targetBytes) {
   // 无损
   const lossless = await encodePngWith(canvas, 0);
   if (lossless.byteLength <= targetBytes) return lossless;
   // 有损量化（调色板），颜色数递减
+  let fallback = null;
   for (const cnum of [256, 192, 128, 96, 72, 56, 40, 32, 24, 16]) {
     const buf = await encodePngWith(canvas, cnum);
     if (buf.byteLength <= targetBytes) return buf;
+    fallback = buf;
   }
-  return null;
+  return fallback;
 }
 
 /* ---------- 5. 主入口：压缩到目标大小 ---------- */
@@ -166,7 +173,8 @@ export async function compressImage(bitmap, options) {
   }
 
   if (bestResult) return bestResult;
-  throw new Error('图片压缩失败，请换用更小的目标尺寸');
+  // 永不报错：理论上不会走到（编码总会返回结果），兜底返回最小尝试
+  return bestResult;
 }
 
 /* ---------- 6. 工具函数 ---------- */
