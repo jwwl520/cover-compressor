@@ -100,7 +100,7 @@ async function compressOne(item) {
       sizeMode: settings.sizeMode,
       sizeValue,
       maxEdge: 4096,
-      minEdge: 480,
+      minEdge: 2560, // 最低保持 2K（1440×2560 长边），原图小于 2K 时不受影响
     });
 
     // 释放旧结果

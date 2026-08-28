@@ -121,7 +121,7 @@ async function encodePngBest(canvas, targetBytes) {
  *   sizeMode  尺寸模式 'maxEdge' | 'custom' | 'percent' | 'original'
  *   sizeValue maxEdge: 数字; custom: {width,height}; percent: 0-100 数字
  *   maxEdge   尺寸模式下的硬性最长边上限
- *   minEdge   迭代降级的尺寸下限（防止压得太小）
+ *   minEdge   迭代降级的尺寸下限（最长边，默认 2K=2560，防止压到 2K 以下）
  */
 export async function compressImage(bitmap, options) {
   const {
@@ -130,7 +130,7 @@ export async function compressImage(bitmap, options) {
     sizeMode = 'maxEdge',
     sizeValue,
     maxEdge = 4096,
-    minEdge = 480,
+    minEdge = 2560,
   } = options;
 
   const targetBytes = Math.max(1, targetKB * 1024);
@@ -161,7 +161,8 @@ export async function compressImage(bitmap, options) {
       }
     }
     if (edge <= minEdge) break;
-    edge = Math.round(edge * 0.82);
+    // 钳制下限：尺寸最低保持 minEdge（2K），不会压到 2K 以下
+    edge = Math.max(minEdge, Math.round(edge * 0.82));
   }
 
   if (bestResult) return bestResult;
