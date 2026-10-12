@@ -278,53 +278,8 @@ const totalSave = computed(() => {
       压缩引擎：<b>MozJPEG</b>（JPG） + <b>UPNG 量化</b>（PNG） · 策略：限尺寸 → 二分质量 → 逐级降级
     </div>
 
-    <!-- 有图：设置 + 处理 -->
+    <!-- 有图：处理 -->
     <template v-else>
-      <!-- 设置面板 -->
-      <div class="settings-panel">
-        <div class="setting-group">
-          <label>目标大小 (KB)</label>
-          <div class="setting-control">
-            <input type="number" v-model.number="settings.targetKB" min="1" max="2048" />
-            <span style="color: var(--text-dim); font-size: 12px">KB</span>
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label>输出格式</label>
-          <div class="seg">
-            <button :class="{ active: settings.outType === 'image/jpeg' }" @click="settings.outType = 'image/jpeg'">JPG</button>
-            <button :class="{ active: settings.outType === 'image/png' }" @click="settings.outType = 'image/png'">PNG</button>
-          </div>
-          <div style="font-size: 11px; color: var(--text-dim); margin-top: 6px">
-            {{ settings.outType === 'image/jpeg' ? 'MozJPEG 有损，同大小下更清晰' : 'PNG 量化压缩（目标过小会自动降色数）' }}
-          </div>
-        </div>
-
-        <div class="setting-group">
-          <label>尺寸</label>
-          <div class="seg" style="margin-bottom: 8px">
-            <button :class="{ active: settings.sizeMode === 'original' }" @click="settings.sizeMode = 'original'">原尺寸</button>
-            <button :class="{ active: settings.sizeMode === 'maxEdge' }" @click="settings.sizeMode = 'maxEdge'">最长边</button>
-            <button :class="{ active: settings.sizeMode === 'custom' }" @click="settings.sizeMode = 'custom'">自定义</button>
-            <button :class="{ active: settings.sizeMode === 'percent' }" @click="settings.sizeMode = 'percent'">百分比</button>
-          </div>
-          <div v-if="settings.sizeMode === 'maxEdge'" class="setting-control">
-            <input type="number" v-model.number="settings.maxEdge" min="100" max="8192" />
-            <span style="color: var(--text-dim); font-size: 12px">px</span>
-          </div>
-          <div v-else-if="settings.sizeMode === 'custom'" class="size-custom">
-            <input type="number" v-model.number="settings.customW" min="1" placeholder="宽" />
-            <span>×</span>
-            <input type="number" v-model.number="settings.customH" min="1" placeholder="高(留空=等比)" />
-          </div>
-          <div v-else-if="settings.sizeMode === 'percent'" class="setting-control">
-            <input type="number" v-model.number="settings.percent" min="1" max="100" />
-            <span style="color: var(--text-dim); font-size: 12px">%</span>
-          </div>
-        </div>
-      </div>
-
       <!-- 操作栏 -->
       <div class="action-bar">
         <button class="btn btn-primary" :disabled="processing || !hasWork" @click="compressAll">
