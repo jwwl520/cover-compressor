@@ -16,13 +16,17 @@ const ratio = ref(null);  // 图片宽高比
 
 const hint = computed(() => compressHint(props.item));
 
-/* 按容器大小等比计算预览尺寸（contain 逻辑） */
+/* 按容器可用区域等比计算预览尺寸（contain 逻辑） */
 function recompute() {
   const stage = stageEl.value;
   if (!stage || !ratio.value) return;
-  const W = stage.clientWidth;
-  const H = stage.clientHeight;
-  if (!W || !H) return;
+  // clientWidth/Height 含 padding，扣除后才是真实可用区域（否则图片会溢出边框）
+  const cs = getComputedStyle(stage);
+  const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const W = stage.clientWidth - padX;
+  const H = stage.clientHeight - padY;
+  if (W <= 0 || H <= 0) return;
   let w = W;
   let h = W / ratio.value;
   if (h > H) {

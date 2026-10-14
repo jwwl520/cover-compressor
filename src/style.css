@@ -1144,17 +1144,18 @@ input[type='number']::-webkit-inner-spin-button {
   max-height: 100%;
 }
 
+/* 布局用 grid：提示文字占剩余空间，按钮组位置固定（不随文字长短移动、不换行跳动） */
 .pv-foot {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  justify-content: space-between;
   gap: 20px;
-  flex-wrap: wrap;
   padding: 16px 24px;
   border-top: 1px solid var(--border);
 }
 
 .pv-hint {
+  min-width: 0;
   font-family: var(--font-sans);
   font-size: 12px;
   letter-spacing: 0.06em;
@@ -1169,7 +1170,6 @@ input[type='number']::-webkit-inner-spin-button {
 .pv-actions {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 /* ---------- 响应式 ---------- */
@@ -1200,7 +1200,11 @@ input[type='number']::-webkit-inner-spin-button {
   }
   .pv-head { padding: 12px 16px; }
   .pv-stage { padding: 10px; }
-  .pv-foot { padding: 12px 16px; }
-  .pv-actions { flex: 1; }
+  .pv-foot {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  .pv-actions { width: 100%; }
   .pv-actions .btn { flex: 1; padding: 10px 14px; }
 }

@@ -156,6 +156,7 @@ async function compressOne(item) {
     item.resultWidth = result.width;
     item.resultHeight = result.height;
     item.resultType = settings.outType;
+    item.steps = result.steps; // 实际使用的档位（「再来一次」在此基础上继续降）
     item.atMin = result.atMin;
     item.reachedTarget = result.reachedTarget;
     item.baseEdge = result.baseEdge;
