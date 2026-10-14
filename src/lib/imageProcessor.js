@@ -62,6 +62,11 @@ function canvasToImageData(canvas) {
 
 /* ---------- 3. JPG 编码（MozJPEG） ---------- */
 
+// 画质优先参数：亮度质量不得低于 QUALITY_MIN，色度单独保高（消除低质量偏色/马赛克）
+const QUALITY_MIN = 55;    // 亮度质量下限（保守，避免细节成马赛克）
+const QUALITY_MAX = 90;
+const CHROMA_QUALITY = 80; // 色度质量（保色，消除人脸偏绿）
+
 /**
  * 在给定 canvas 上用 MozJPEG 二分质量，找到「大小 ≤ targetBytes」的最高质量
  * 全部质量都超目标时，返回最低质量的结果（best effort，不报错）
@@ -69,20 +74,24 @@ function canvasToImageData(canvas) {
  */
 async function encodeJpegBest(canvas, targetBytes) {
   const imageData = canvasToImageData(canvas);
-  let lo = 10;   // 最低容忍质量（MozJPEG 0-100，比原 35 更使劲）
-  let hi = 92;
+  let lo = QUALITY_MIN;
+  let hi = QUALITY_MAX;
   let best = null;
   let fallback = null; // 最低质量尝试结果
   let minQ = Infinity;
   for (let i = 0; i < 7; i++) {
     const q = Math.round((lo + hi) / 2);
-    // MozJPEG 逐条扫描，progressive 优化
     const buf = await encodeJpeg(imageData, {
       quality: q,
       baseline: false,
       arithmetic: false,
       progressive: true,
       optimize_coding: true,
+      separate_chroma_quality: true, // 色度质量独立于亮度，保色
+      chroma_quality: CHROMA_QUALITY,
+      chroma_subsample: 1,   // 4:4:4：不做色度下采样，消除色度渗色
+      trellis_multipass: true, // 增强压缩率：同质量文件更小
+      trellis_loops: 2,
     });
     if (q < minQ) { minQ = q; fallback = buf; }
     if (buf.byteLength <= targetBytes) { best = buf; lo = q + 1; }
@@ -121,6 +130,11 @@ async function encodePngBest(canvas, targetBytes) {
 /* ---------- 5. 主入口：压缩到目标大小 ---------- */
 
 /**
+ * 单次压缩（画质优先，不自动降分辨率）
+ *
+ * 分辨率由 steps（「再来一次」的次数）控制：每档 ×0.8，最低不低于 minEdge（2K）
+ * 原图小于 minEdge 时不缩放、也不能再降档（atMin = true）
+ *
  * @param {ImageBitmap} bitmap 已解码的图
  * @param {Object} options
  *   targetKB  目标大小 KB（默认 200）
@@ -128,53 +142,56 @@ async function encodePngBest(canvas, targetBytes) {
  *   sizeMode  尺寸模式 'maxEdge' | 'custom' | 'percent' | 'original'
  *   sizeValue maxEdge: 数字; custom: {width,height}; percent: 0-100 数字
  *   maxEdge   尺寸模式下的硬性最长边上限
- *   minEdge   迭代降级的尺寸下限（最长边，默认 2K=2560，防止压到 2K 以下）
+ *   minEdge   最低分辨率（最长边，默认 2K=2560，即 1440×2560）
+ *   steps     「再来一次」降档次数（0 = 首次压缩）
  */
 export async function compressImage(bitmap, options) {
   const {
     targetKB = 200,
     outType = 'image/jpeg',
-    sizeMode = 'maxEdge',
+    sizeMode = 'original',
     sizeValue,
     maxEdge = 4096,
     minEdge = 2560,
+    steps = 0,
   } = options;
 
   const targetBytes = Math.max(1, targetKB * 1024);
   const base = computeTargetSize(bitmap.width, bitmap.height, sizeMode, sizeValue, maxEdge);
+  const baseEdge = Math.max(base.width, base.height);
 
-  let edge = Math.max(base.width, base.height);
-  let bestResult = null;
-
-  // 迭代降级：同一比例下逐渐缩小最长边
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const s = Math.min(1, edge / Math.max(base.width, base.height));
-    const w = Math.max(1, Math.round(base.width * s));
-    const h = Math.max(1, Math.round(base.height * s));
-    const canvas = drawScaled(bitmap, { width: w, height: h });
-
-    let buf = null;
-    if (outType === 'image/jpeg') buf = await encodeJpegBest(canvas, targetBytes);
-    else buf = await encodePngBest(canvas, targetBytes);
-
-    if (buf) {
-      const blob = new Blob([buf], { type: outType });
-      if (blob.size <= targetBytes) {
-        return { blob, width: w, height: h, size: blob.size, reachedTarget: true, attempt };
-      }
-      // 记录 best-effort（最小的一次）
-      if (!bestResult || blob.size < bestResult.blob.size) {
-        bestResult = { blob, width: w, height: h, size: blob.size, reachedTarget: false, attempt };
-      }
-    }
-    if (edge <= minEdge) break;
-    // 钳制下限：尺寸最低保持 minEdge（2K），不会压到 2K 以下
-    edge = Math.max(minEdge, Math.round(edge * 0.82));
+  // 分辨率档位：原图小于 2K 时保持原尺寸（不放大、也不能再降）
+  let edge;
+  let atMin;
+  if (baseEdge <= minEdge) {
+    edge = baseEdge;
+    atMin = true;
+  } else {
+    edge = Math.max(minEdge, Math.round(baseEdge * Math.pow(0.8, steps)));
+    atMin = edge <= minEdge;
   }
 
-  if (bestResult) return bestResult;
-  // 永不报错：理论上不会走到（编码总会返回结果），兜底返回最小尝试
-  return bestResult;
+  const s = edge / baseEdge;
+  const w = Math.max(1, Math.round(base.width * s));
+  const h = Math.max(1, Math.round(base.height * s));
+  const canvas = drawScaled(bitmap, { width: w, height: h });
+
+  const buf =
+    outType === 'image/jpeg'
+      ? await encodeJpegBest(canvas, targetBytes)
+      : await encodePngBest(canvas, targetBytes);
+
+  const blob = new Blob([buf], { type: outType });
+  return {
+    blob,
+    width: w,
+    height: h,
+    size: blob.size,
+    reachedTarget: blob.size <= targetBytes,
+    steps,
+    atMin, // 已达最低分辨率，无法再次压缩
+    baseEdge,
+  };
 }
 
 /* ---------- 6. 工具函数 ---------- */

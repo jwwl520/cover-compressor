@@ -7,7 +7,22 @@ const props = defineProps({
   item: { type: Object, required: true },
 });
 
-const emit = defineEmits(['download', 'remove']);
+const emit = defineEmits(['download', 'remove', 'retry']);
+
+/* 压缩状态提示：已达标 / 未达标 / 已达最低分辨率 */
+const hint = computed(() => {
+  const it = props.item;
+  if (it.status !== 'done') return null;
+  const target = it.targetKB || 200;
+  if (it.atMin) {
+    return it.reachedTarget
+      ? `✓ 已达标 · 已达最低分辨率 ${it.resultWidth}×${it.resultHeight}`
+      : `⚠ 已达最低分辨率 ${it.resultWidth}×${it.resultHeight}，无法再次压缩`;
+  }
+  return it.reachedTarget
+    ? `✓ 已达标（目标 ${target} KB）· 可点「再来一次」压得更小`
+    : `⚠ 未达目标 ${target} KB · 可点「再来一次」降低分辨率`;
+});
 
 const stateLabel = computed(() => {
   const s = props.item.status;
@@ -79,8 +94,25 @@ function download() {
       <div v-if="savePercent !== null" class="save-badge">共节省 {{ savePercent }}%</div>
     </div>
 
+    <!-- 压缩状态提示 -->
+    <div
+      v-if="hint"
+      class="card-hint"
+      :class="{ warn: !item.reachedTarget && !item.atMin, min: item.atMin && !item.reachedTarget }"
+    >
+      {{ hint }}
+    </div>
+
     <div v-if="item.status === 'done'" class="card-foot">
       <button class="btn btn-primary" @click="download">⬇ 下载</button>
+      <button
+        class="btn btn-ghost"
+        :disabled="item.atMin"
+        :title="item.atMin ? '已达最低分辨率，无法再次压缩' : '降低一档分辨率重新压缩'"
+        @click="emit('retry', item)"
+      >
+        ↻ 再来一次
+      </button>
       <button class="btn btn-ghost" @click="emit('remove', item)">移除</button>
     </div>
   </div>

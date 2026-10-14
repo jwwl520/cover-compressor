@@ -32,6 +32,7 @@ const totalOriginal = computed(() => items.value.reduce((s, i) => s + (i.origSiz
 const totalResult = computed(() => items.value.reduce((s, i) => s + (i.resultSize || 0), 0));
 const doneCount = computed(() => items.value.filter((i) => i.status === 'done').length);
 const hasWork = computed(() => items.value.some((i) => i.status !== 'done'));
+const canRetryAll = computed(() => items.value.some((i) => i.status === 'done' && !i.atMin));
 
 /* ---------- 上传 ---------- */
 function onPick() {
@@ -70,6 +71,11 @@ function addFiles(fileList) {
       resultWidth: null,
       resultHeight: null,
       resultType: null,
+      steps: 0,            // 「再来一次」降档次数
+      atMin: false,        // 已达最低分辨率，无法再次压缩
+      reachedTarget: false,
+      baseEdge: null,
+      targetKB: null,
       error: null,
     });
   }
@@ -100,7 +106,8 @@ async function compressOne(item) {
       sizeMode: settings.sizeMode,
       sizeValue,
       maxEdge: 4096,
-      minEdge: 2560, // 最低保持 2K（1440×2560 长边），原图小于 2K 时不受影响
+      minEdge: 2560, // 最低分辨率 2K（1440×2560），原图小于 2K 时不受影响
+      steps: item.steps || 0, // 「再来一次」降档次数
     });
 
     // 释放旧结果
@@ -110,6 +117,10 @@ async function compressOne(item) {
     item.resultWidth = result.width;
     item.resultHeight = result.height;
     item.resultType = settings.outType;
+    item.atMin = result.atMin;
+    item.reachedTarget = result.reachedTarget;
+    item.baseEdge = result.baseEdge;
+    item.targetKB = settings.targetKB;
     item.progress = 100;
     item.status = 'done';
   } catch (err) {
@@ -118,6 +129,29 @@ async function compressOne(item) {
     item.error = err?.message || '压缩失败';
   } finally {
     if (bitmap) bitmap.close();
+  }
+}
+
+/* ---------- 单张「再来一次」：降一档分辨率重压 ---------- */
+async function retryOne(item) {
+  if (processing.value || item.status === 'processing') return;
+  if (item.atMin) return; // 已达最低分辨率，无法再次压缩
+  item.steps = (item.steps || 0) + 1;
+  await compressOne(item);
+}
+
+/* ---------- 全部「再来一次」 ---------- */
+async function retryAll() {
+  if (processing.value) return;
+  processing.value = true;
+  try {
+    for (const item of items.value) {
+      if (item.status !== 'done' || item.atMin) continue;
+      item.steps = (item.steps || 0) + 1;
+      await compressOne(item);
+    }
+  } finally {
+    processing.value = false;
   }
 }
 
@@ -285,6 +319,9 @@ const totalSave = computed(() => {
         <button class="btn btn-primary" :disabled="processing || !hasWork" @click="compressAll">
           {{ processing ? '处理中…' : hasWork ? '开始处理' : '全部已完成 ✓' }}
         </button>
+        <button class="btn btn-ghost" :disabled="processing || !canRetryAll" @click="retryAll">
+          ↻ 全部再来一次
+        </button>
         <button class="btn btn-ghost" :disabled="processing || !doneCount" @click="downloadAll">
           📦 打包下载全部 ({{ doneCount }})
         </button>
@@ -306,6 +343,7 @@ const totalSave = computed(() => {
           :item="item"
           @download="downloadOne"
           @remove="removeItem"
+          @retry="retryOne"
         />
       </div>
     </template>
