@@ -16,11 +16,11 @@ const hint = computed(() => {
   const target = it.targetKB || 200;
   if (it.atMin) {
     return it.reachedTarget
-      ? `✓ 已达标 · 已达最低分辨率 ${it.resultWidth}×${it.resultHeight}`
-      : `⚠ 已达最低分辨率 ${it.resultWidth}×${it.resultHeight}，无法再次压缩`;
+      ? '✓ 已达标 · 已达最低分辨率'
+      : '⚠ 已达最低分辨率，无法再次压缩';
   }
   return it.reachedTarget
-    ? `✓ 已达标（目标 ${target} KB）· 可点「再来一次」压得更小`
+    ? `✓ 已达标 ${target} KB · 可点「再来一次」提升画质`
     : `⚠ 未达目标 ${target} KB · 可点「再来一次」降低分辨率`;
 });
 

@@ -62,11 +62,6 @@ function canvasToImageData(canvas) {
 
 /* ---------- 3. JPG 编码（MozJPEG） ---------- */
 
-// 画质优先参数：亮度质量不得低于 QUALITY_MIN，色度单独保高（消除低质量偏色/马赛克）
-const QUALITY_MIN = 55;    // 亮度质量下限（保守，避免细节成马赛克）
-const QUALITY_MAX = 90;
-const CHROMA_QUALITY = 80; // 色度质量（保色，消除人脸偏绿）
-
 /**
  * 在给定 canvas 上用 MozJPEG 二分质量，找到「大小 ≤ targetBytes」的最高质量
  * 全部质量都超目标时，返回最低质量的结果（best effort，不报错）
@@ -74,8 +69,8 @@ const CHROMA_QUALITY = 80; // 色度质量（保色，消除人脸偏绿）
  */
 async function encodeJpegBest(canvas, targetBytes) {
   const imageData = canvasToImageData(canvas);
-  let lo = QUALITY_MIN;
-  let hi = QUALITY_MAX;
+  let lo = 10;   // 最低容忍质量（MozJPEG 0-100）
+  let hi = 92;
   let best = null;
   let fallback = null; // 最低质量尝试结果
   let minQ = Infinity;
@@ -87,11 +82,6 @@ async function encodeJpegBest(canvas, targetBytes) {
       arithmetic: false,
       progressive: true,
       optimize_coding: true,
-      separate_chroma_quality: true, // 色度质量独立于亮度，保色
-      chroma_quality: CHROMA_QUALITY,
-      chroma_subsample: 1,   // 4:4:4：不做色度下采样，消除色度渗色
-      trellis_multipass: true, // 增强压缩率：同质量文件更小
-      trellis_loops: 2,
     });
     if (q < minQ) { minQ = q; fallback = buf; }
     if (buf.byteLength <= targetBytes) { best = buf; lo = q + 1; }
