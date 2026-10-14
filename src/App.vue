@@ -1,7 +1,8 @@
 <script setup>
-import { ref, reactive, watch, computed, nextTick } from 'vue';
+import { ref, reactive, watch, computed, nextTick, onMounted } from 'vue';
 import ImageCard from './components/ImageCard.vue';
 import CoverChecker from './components/CoverChecker.vue';
+import UsageDialog from './components/UsageDialog.vue';
 import {
   decodeImage,
   compressImage,
@@ -17,6 +18,32 @@ const isDragging = ref(false);
 const fileInput = ref(null);
 const auxOpen = ref(false); // 辅助功能折叠区
 const rejected = ref([]);   // 被拒绝的非 JPG/PNG 文件名
+
+/* ---------- 使用说明弹窗 ---------- */
+const showUsage = ref(false);
+const USAGE_KEY = 'cover-compressor:usage-never';
+
+onMounted(() => {
+  try {
+    if (localStorage.getItem(USAGE_KEY) !== '1') showUsage.value = true;
+  } catch {
+    showUsage.value = true;
+  }
+});
+
+function closeUsage() {
+  showUsage.value = false;
+}
+
+/* 「不再提示」：写入缓存，之后不再自动弹出 */
+function neverUsage() {
+  try {
+    localStorage.setItem(USAGE_KEY, '1');
+  } catch {
+    /* 忽略隐私模式等写入失败的情况 */
+  }
+  showUsage.value = false;
+}
 
 const settings = reactive({
   targetKB: 200,
@@ -365,5 +392,13 @@ const totalSave = computed(() => {
         </div>
       </div>
     </section>
+
+    <!-- 使用说明入口 -->
+    <footer class="page-foot">
+      <button class="link-btn" @click="showUsage = true">使用说明 · How to Use</button>
+    </footer>
   </main>
+
+  <!-- 使用说明弹窗 -->
+  <UsageDialog :visible="showUsage" @close="closeUsage" @never="neverUsage" />
 </template>
