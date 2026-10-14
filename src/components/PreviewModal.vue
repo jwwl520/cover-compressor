@@ -14,7 +14,13 @@ const stageEl = ref(null);
 const fitStyle = ref({}); // 计算出的预览尺寸（等比适应窗口）
 const ratio = ref(null);  // 图片宽高比
 
-const hint = computed(() => compressHint(props.item));
+/* 提示文案：处理中也要占据位置，避免按钮组因文本消失而左右跳动 */
+const hint = computed(() => {
+  const it = props.item;
+  if (!it) return '';
+  if (it.status === 'processing') return '正在重新压缩…';
+  return compressHint(it);
+});
 
 /* 按容器可用区域等比计算预览尺寸（contain 逻辑） */
 function recompute() {
@@ -94,9 +100,11 @@ onBeforeUnmount(cleanup);
         </div>
       </div>
 
-      <!-- 底部：提示 + 操作按钮 -->
+      <!-- 底部：提示 + 操作按钮（始终占位，避免处理中布局跳动） -->
       <div class="pv-foot">
-        <span v-if="hint" class="pv-hint" :class="{ warn: !item.reachedTarget }">{{ hint }}</span>
+        <span class="pv-hint" :class="{ warn: item.status === 'done' && !item.reachedTarget }">
+          {{ hint }}
+        </span>
         <div class="pv-actions">
           <button class="btn btn-primary" @click="emit('download', item)">⬇ 下载</button>
           <button
