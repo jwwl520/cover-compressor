@@ -3,6 +3,7 @@ import { ref, reactive, watch, computed, nextTick, onMounted } from 'vue';
 import ImageCard from './components/ImageCard.vue';
 import CoverChecker from './components/CoverChecker.vue';
 import UsageDialog from './components/UsageDialog.vue';
+import PreviewModal from './components/PreviewModal.vue';
 import {
   decodeImage,
   compressImage,
@@ -43,6 +44,17 @@ function neverUsage() {
     /* 忽略隐私模式等写入失败的情况 */
   }
   showUsage.value = false;
+}
+
+/* ---------- 全屏预览（点击卡片预览放大） ---------- */
+const previewItem = ref(null);
+
+function openPreview(item) {
+  previewItem.value = item;
+}
+
+function closePreview() {
+  previewItem.value = null;
 }
 
 const settings = reactive({
@@ -268,6 +280,7 @@ function removeItem(item) {
     if (item.resultUrl) URL.revokeObjectURL(item.resultUrl);
     URL.revokeObjectURL(item.origUrl);
     items.value.splice(idx, 1);
+    if (previewItem.value === item) previewItem.value = null; // 移除时关闭预览
   }
 }
 
@@ -371,6 +384,7 @@ const totalSave = computed(() => {
           @download="downloadOne"
           @remove="removeItem"
           @retry="retryOne"
+          @preview="openPreview"
         />
       </div>
     </template>
@@ -401,4 +415,13 @@ const totalSave = computed(() => {
 
   <!-- 使用说明弹窗 -->
   <UsageDialog :visible="showUsage" @close="closeUsage" @never="neverUsage" />
+
+  <!-- 全屏预览（点击卡片预览放大） -->
+  <PreviewModal
+    :item="previewItem"
+    @close="closePreview"
+    @download="downloadOne"
+    @retry="retryOne"
+    @remove="removeItem"
+  />
 </template>

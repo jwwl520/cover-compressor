@@ -2,27 +2,28 @@
 import { computed } from 'vue';
 import CompareSlider from './CompareSlider.vue';
 import { formatBytes } from '../lib/imageProcessor.js';
+import { compressHint } from '../lib/hints.js';
 
 const props = defineProps({
   item: { type: Object, required: true },
 });
 
-const emit = defineEmits(['download', 'remove', 'retry']);
+const emit = defineEmits(['download', 'remove', 'retry', 'preview']);
 
-/* 压缩状态提示：已达标 / 未达标 / 已达最低分辨率 */
-const hint = computed(() => {
-  const it = props.item;
-  if (it.status !== 'done') return null;
-  const target = it.targetKB || 200;
-  if (it.atMin) {
-    return it.reachedTarget
-      ? '✓ 已达标 · 已达最低分辨率'
-      : '⚠ 已达最低分辨率，无法再次压缩';
-  }
-  return it.reachedTarget
-    ? `✓ 已达标 ${target} KB · 可点「再来一次」提升画质`
-    : `⚠ 未达目标 ${target} KB · 可点「再来一次」降低分辨率`;
-});
+/* 压缩状态提示（与全屏预览共用同一函数） */
+const hint = computed(() => compressHint(props.item) || null);
+
+/* 点击预览放大：区分「点击」与「拖动滑块」，避免拖拽误触发放大 */
+let downPos = null;
+function onPreviewDown(e) {
+  downPos = { x: e.clientX, y: e.clientY };
+}
+function onPreviewUp(e) {
+  if (!downPos) return;
+  const moved = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+  downPos = null;
+  if (moved < 6) emit('preview', props.item);
+}
 
 const stateLabel = computed(() => {
   const s = props.item.status;
@@ -60,7 +61,15 @@ function download() {
       </div>
 
       <template v-else-if="item.resultUrl">
-        <CompareSlider :before-url="item.origUrl" :after-url="item.resultUrl" />
+        <div
+          class="card-preview"
+          title="点击放大查看"
+          @pointerdown="onPreviewDown"
+          @pointerup="onPreviewUp"
+        >
+          <CompareSlider :before-url="item.origUrl" :after-url="item.resultUrl" />
+          <span class="card-preview-zoom">⤢ 放大</span>
+        </div>
       </template>
 
       <template v-else-if="item.origUrl">
